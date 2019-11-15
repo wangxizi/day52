@@ -35,4 +35,5 @@
     -->
     <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true"/>
     <jdbc:embedded-database id="dataSource"/>
+    <import resource="classpath:spring-redis.xml"/>
 </beans>

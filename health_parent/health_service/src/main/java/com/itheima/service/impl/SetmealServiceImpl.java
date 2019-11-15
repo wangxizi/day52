@@ -1,18 +1,18 @@
 package com.itheima.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.itheima.constant.RedisConstant;
 import com.itheima.dao.SetmealDao;
 import com.itheima.entity.PageResult;
-import com.itheima.pojo.CheckGroup;
-import com.itheima.pojo.CheckItem;
 import com.itheima.pojo.Setmeal;
 import com.itheima.service.SetmealService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashMap;
+import redis.clients.jedis.JedisPool;import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +25,9 @@ public class SetmealServiceImpl implements SetmealService {
 
     @Autowired
     private SetmealDao setmealDao;
+
+    @Autowired
+    private JedisPool jedisPool;
 
     //新增套餐
     @Override
@@ -43,11 +46,30 @@ public class SetmealServiceImpl implements SetmealService {
         return new PageResult(setmealPage.getTotal(),setmealPage.getResult());
     }
 
-    //查询所有套餐数据
+    //查询所有套餐信息
     @Override
     public List<Setmeal> getSetmeal() {
-
-        return setmealDao.getSetmeal();
+        List<Setmeal> setmeals = null;
+        try {
+            //1.首先从redis中获取
+            String allSetmeal = jedisPool.getResource().get(RedisConstant.ALL_SETMEAL);
+            ObjectMapper objectMapper = new ObjectMapper();
+            if (allSetmeal != null) {
+                //1.2 将从redis中获取到的json字符串转换成java对象
+                setmeals = objectMapper.readValue(allSetmeal, new TypeReference<List<Setmeal>>(){});
+                return setmeals;
+            }
+            //2.1reids中没有，则从mysql中获取
+            setmeals = setmealDao.getSetmeal();
+            //2.2 从mysql中获取了后转换成json格式字符创  然后存入redis中
+            //将套餐集合转换为json
+            String jsonSetmeals = objectMapper.writeValueAsString(setmeals);
+            //将json存入redis
+            String set = jedisPool.getResource().set(RedisConstant.ALL_SETMEAL, jsonSetmeals);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return setmeals;
     }
 
 
