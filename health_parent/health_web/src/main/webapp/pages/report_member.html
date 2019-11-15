@@ -9,8 +9,15 @@
         <meta name="keywords" content="传智健康">
         <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
         <!-- 引入样式 -->
+        <link rel="stylesheet" href="../plugins/elementui/index.css">
+        <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
         <link rel="stylesheet" href="../css/style.css">
-        <script src="../plugins/echarts/echarts.js"></script>
+        <link rel="stylesheet" href="../css/orderset.css">
+        <!-- 引入组件库 -->
+        <script src="/js/vue.js"/>
+        <script src="../plugins/elementui/index.js"></script>
+        <script type="text/javascript" src="../js/jquery.min.js"></script>
+        <script src="../js/axios-0.18.0.js"></script>
     </head>
     <body class="hold-transition">
         <div id="app">
@@ -28,12 +35,56 @@
                     <div id="chart1" style="height:600px;"></div>
                 </div>
             </div>
+            <div class="block">
+                <span class="demonstration">默认</span>
+                <el-date-picker
+                        v-model="value1"
+                        type="daterange"
+                        range-separator="至"
+                        start-placeholder="开始日期"
+                        end-placeholder="结束日期">
+                </el-date-picker>
+            </div>
         </div>
     </body>
-    <!-- 引入组件库 -->
-    <script src="../js/vue.js"></script>
-    <script src="../js/axios-0.18.0.js"></script>
-    <script type="text/javascript">
+    <script>
+        new vue({
+           el:"app",
+           data:{
+               return:{
+                   pickerOptions: {
+                       shortcuts: [{
+                           text: '最近一周',
+                           onClick(picker) {
+                               const end = new Date();
+                               const start = new Date();
+                               start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                               picker.$emit('pick', [start, end]);
+                           }
+                       }, {
+                           text: '最近一个月',
+                           onClick(picker) {
+                               const end = new Date();
+                               const start = new Date();
+                               start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                               picker.$emit('pick', [start, end]);
+                           }
+                       }, {
+                           text: '最近三个月',
+                           onClick(picker) {
+                               const end = new Date();
+                               const start = new Date();
+                               start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                               picker.$emit('pick', [start, end]);
+                           }
+                       }]
+                   },
+                   value1: '',
+                   value2: ''
+       }
+           },
+           created(){},
+       })
         // 基于准备好的dom，初始化echarts实例
         var myChart1 = echarts.init(document.getElementById('chart1'));
 

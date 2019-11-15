@@ -27,7 +27,6 @@ public class ClearImgJob {
                 jedisPool.getResource().srem(RedisConstant.SETMEAL_PIC_RESOURCES,fileName);
                 System.out.println("删除成功:"+fileName);
             }
-
         }
     }
 }

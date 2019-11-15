@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.dao.SetmealDao">
+
+    <!--新增套餐-->
+    <insert id="add" parameterType="com.itheima.pojo.Setmeal">
+        <selectKey resultType="int" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        INSERT INTO t_setmeal
+        (name,code,helpCode,sex,age,price,remark,attention,img)
+        VALUES
+        (#{name},#{code},#{helpCode},#{sex},#{age},#{price},#{remark},#{attention},#{img})
+    </insert>
+
+    <!--设置套餐表和检查组中间表-->
+    <insert id="setSetmealAndCheckGroup" parameterType="hashmap">
+        INSERT INTO t_setmeal_checkgroup (setmeal_id,checkgroup_id)
+        VALUES (#{setmealId},#{checkgroupId})
+    </insert>
+
+    <!--套餐分页查询-->
+    <select id="selectByCondition" parameterType="String" resultType="com.itheima.pojo.Setmeal">
+        SELECT * from t_setmeal
+        <if test="value != null and value.length > 0">
+            where code = #{value} or name = #{value} or helpCode = #{helpCode}
+        </if>
+    </select>
+
+    <!--查询所有套餐数据-->
+    <select id="getSetmeal" resultType="com.itheima.pojo.Setmeal">
+        SELECT * FROM t_setmeal
+    </select>
+
+    <!--方式二：  可以一个ResultMap继承另一个ResultMap 需要根据不同的返回结果使用相应的ResultMap-->
+    <!-- 返回结果集-->
+    <resultMap type="com.itheima.pojo.Setmeal" id="baseResultMap">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="code" property="code"/>
+        <result column="helpCode" property="helpCode"/>
+        <result column="sex" property="sex"/>
+        <result column="age" property="age"/>
+        <result column="price" property="price"/>
+        <result column="remark" property="remark"/>
+        <result column="attention" property="attention"/>
+        <result column="img" property="img"/>
+    </resultMap>
+    <resultMap type="com.itheima.pojo.Setmeal" id="findByIdResultMap" extends="baseResultMap">
+        <collection property="checkGroups" javaType="ArrayList"
+                    ofType="com.itheima.pojo.CheckGroup" column="id"
+                    select="com.itheima.dao.CheckgroupDao.findCheckGroupById">
+        </collection>
+    </resultMap>
+    <select id="findById" resultMap="findByIdResultMap">
+        select * from t_setmeal  where id=#{id}
+    </select>
+
+    <!--套餐占比统计-->
+    <select id="findSetmealCount" resultType="map">
+        SELECT s.name,COUNT(o.id) as value FROM t_order o ,t_setmeal s WHERE o.setmeal_id=s.id GROUP BY s.name
+    </select>
+
+    <!--热门套餐-->
+    <select id="hotSetmeal" resultType="map">
+        select ts.name,count(o.id) setmeal_count ,count(o.id)/(select count(*) from t_order) proportion,ts.remark
+        from t_setmeal ts,t_order o where ts.id = o.setmeal_id
+        group by ts.name order by setmeal_count limit 0,4
+    </select>
+</mapper>
